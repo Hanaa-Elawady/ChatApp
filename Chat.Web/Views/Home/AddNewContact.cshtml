@@ -1,0 +1,31 @@
+﻿@model CheckPhoneNumberViewModel
+@{
+    ViewData["Title"] = "SignUP";
+    Layout = "~/Views/Shared/_AuthLayout.cshtml";
+}
+
+
+<h1 class="text-center">Register to WhatsApp</h1>
+
+<form asp-Action="AddnewContact" class="row g-3 my-4">
+    <div class="col-md-6">
+        <div class="form-data">
+            <input asp-for="PhoneNumber" type="text" class="form-control" placeholder="Phone Number" />
+            <span asp-validation-for="PhoneNumber"></span>
+        </div>
+    </div>
+    <div class="col-12">
+        <button type="submit" class="btn w-100 main-btn">Register</button>
+    </div>
+</form>
+
+<footer>
+    <p class="text-center small">
+        Already a member?
+        <a asp-action="LogIn" asp-controller="Auth" class="link-secondary text-decoration-none" role="button">
+            LogIn
+            <i class="fa-solid fa-angle-right"></i>
+        </a>
+    </p>
+</footer>
+

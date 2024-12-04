@@ -1,0 +1,40 @@
+﻿<!DOCTYPE html>
+<html lang="en" dir="ltr" data-theme="dark">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <meta name="description" content="CompanyData" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+
+    <link rel="stylesheet" href="~/css/all.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/AuthStyles.css" asp-append-version="true" />
+</head>
+<body>
+    <span class="position-fixed bottom-0 end-0 m-3 z-3">
+        <i role="button" id="mode" class="fa-regular fa-sun fa-xl p-3"></i>
+    </span>
+
+    <main class="container Auth min-vh-100 hstack">
+        <section class="Auth-area shadow w-100 rounded overflow-hidden">
+            <div class="row g-0">
+                <div class="col-lg-5 d-none d-md-block">
+                    <div class="image"></div>
+                </div>
+                <div class="col-lg-7">
+                    <div class="p-4">
+                        <header class="text-center">
+                            <img src="~/Assests/Images/Logo.png" alt="Company Logo" Width="200" height="100" />
+                        </header>
+                        @RenderBody()
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js" asp-append-version="true"></script>
+    <script src="~/js/Auth.js" asp-append-version="true"></script>
+</body>
+</html>

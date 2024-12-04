@@ -1,0 +1,41 @@
+﻿@model LoginViewModel
+@{
+    ViewData["Title"] = "Login";
+    Layout = "~/Views/Shared/_AuthLayout.cshtml";
+}
+
+
+<h1 class="text-center">Login to WhatsApp</h1>
+
+<form asp-Action="LogIn" class="row g-3 my-4">
+    <div class="col-md-6">
+        <div class="form-data">
+            <input asp-for="PhoneNumber" type="text" class="form-control" placeholder="Phone Number" />
+            <p class="text-muted">Ex: +201063795243 </p>
+            <span asp-validation-for="PhoneNumber"></span>
+        </div>
+    </div>
+
+
+    <div class="col-md-6">
+        <div class="form-data">
+            <input asp-for="Password" type="password" class="form-control" placeholder="password" />
+            <span asp-validation-for="Password"></span>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <button type="submit" class="btn w-100 main-btn">Login</button>
+    </div>
+</form>
+
+<footer>
+    <p class="text-center small">
+        Don't Have Account?
+        <a asp-action="Register" asp-controller="Auth" class="link-secondary text-decoration-none" role="button">
+            Register
+            <i class="fa-solid fa-angle-right"></i>
+        </a>
+    </p>
+</footer>
+

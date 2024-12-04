@@ -1,0 +1,60 @@
+﻿@model RegisterViewModel
+@{
+    ViewData["Title"] = "SignUP";
+    Layout = "~/Views/Shared/_AuthLayout.cshtml";
+    // var phoneNumber = TempData["PhoneNumber"];
+}
+
+
+<h1 class="text-center">Continue Register to WhatsApp</h1>
+
+<form asp-Action="ContinueRegister" class="row g-3 my-4" enctype="multipart/form-data">
+    <div class="col-md-6">
+        <div class="form-data">
+            <input asp-for="PhoneNumber" type="text" class="form-control" placeholder="PhoneNumber"  />
+            <span asp-validation-for="PhoneNumber"></span>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="form-data">
+            <input asp-for="DisplayName" type="text" class="form-control" placeholder="DisplayName" />
+            <span asp-validation-for="DisplayName"></span>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="form-data">
+            <input asp-for="Password" type="password" class="form-control" placeholder="password" />
+            <span asp-validation-for="Password"></span>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="form-data">
+            <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="Confirm Password" />
+            <span asp-validation-for="ConfirmPassword"></span>
+        </div>
+    </div>
+    <div class="col-8 mx-auto">
+        <div class="form-data">
+            <input asp-for="ProfilePicture" type="file" class="form-control" placeholder="Upload file " />
+            <span asp-validation-for="ProfilePicture"></span>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <button type="submit" class="btn w-100 main-btn">Register</button>
+    </div>
+</form>
+
+<footer>
+    <p class="text-center small">
+        Already a member?
+        <a asp-action="LogIn" asp-controller="Auth" class="link-secondary text-decoration-none" role="button">
+            LogIn
+            <i class="fa-solid fa-angle-right"></i>
+        </a>
+    </p>
+</footer>
+
