@@ -6,6 +6,6 @@ namespace Chat.Services.Interfaces
     {
         Task<IReadOnlyList<ConnectionDto>> getAllContacts(string UserId);
         Task<ConnectionDto> GetConnection(string UserId);
-        Task<bool> AddNewContact(string PhoneNumber, string UserId);
+        Task<string> AddNewContact(string PhoneNumber, string UserId);
     }
 }

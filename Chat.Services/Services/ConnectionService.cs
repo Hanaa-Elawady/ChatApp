@@ -24,28 +24,30 @@ namespace Chat.Services.Services
             _context = context;
         }
 
-        public async Task<bool> AddNewContact(string PhoneNumber,string UserId)
+        public async Task<string> AddNewContact(string PhoneNumber,string UserId)
         {
             var AllUserConnections = await getAllContacts(UserId);
             var user = await _userManager.FindByNameAsync(PhoneNumber);
-            if(AllUserConnections.Any(c => c.PhoneNumber == PhoneNumber)){
-                return false;
-            }
-            else
+            if(user == null)
             {
-
-                var connection = new UserConnection()
-                {
-                    Id = Guid.NewGuid(),
-                    User1Id = Guid.Parse(UserId),
-                    User2Id = user.Id,
-                    CreatedAt = DateTime.Now,
-                };
-                await  _unitOfWork.Repository<UserConnection>().AddAsync(connection);
-                await _unitOfWork.CompleteAsync();
-                return true;
-
+                return "No User Found";
             }
+
+            if (AllUserConnections.Any(c => c.PhoneNumber == PhoneNumber)){
+                return AllUserConnections.Where(c => c.PhoneNumber == PhoneNumber).FirstOrDefault()?.ConnectionId.ToString();
+            }
+
+            var connection = new UserConnection()
+            {
+                Id = Guid.NewGuid(),
+                User1Id = Guid.Parse(UserId),
+                User2Id = user.Id,
+                CreatedAt = DateTime.Now,
+            };
+            await  _unitOfWork.Repository<UserConnection>().AddAsync(connection);
+            await _unitOfWork.CompleteAsync();
+            return "done";
+
 
         }
 

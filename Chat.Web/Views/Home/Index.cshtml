@@ -18,8 +18,34 @@
                 <img src="/Assests/Images/@User.ProfilePicture" alt="Alternate Text" class="avatar" />
             </div>
             <div>Chats</div>
-            <a class="ms-auto" asp-action="SignOut" asp-controller="Home"><i class="fa-solid fa-right-from-bracket"></i></a>
 
+            <div class="ms-auto dropdown">
+                <a class="btn dropdown-toggle" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fa-solid fa-comment-medical"></i>
+                </a>
+
+                <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                    @foreach (var contact in contacts.OrderBy(x=> x.DisplayName))
+                    {
+                        <li>
+                        <a class="chat-item text-decoration-none text-black dropdown-item w-100 d-flex" role="button" asp-action="Index" asp-controller="Home" asp-route-ActiveContactId="@contact.ConnectionId">
+                            <div class="avatar">
+                                <img src="/Assests/Images/@contact.ProfilePicture" class="avatar" alt="Alternate Text" />
+                            </div>
+                            <div class="chat-content">
+                                <div class="chat-name">@contact.DisplayName</div>
+                            </div>
+                        </a>
+                        </li>
+                    }
+                </ul>
+            </div>
+            <a class="btn" role="button" asp-action="AddnewContact" asp-controller="Home">
+                <i class="fa-solid fa-user-plus"></i>
+            </a>
+
+
+            <a class="btn" asp-action="SignOut" asp-controller="Home"><i class="fa-solid fa-right-from-bracket"></i></a>
         </div>
         <div class="search-container">
             <div class="search-box">
@@ -28,26 +54,26 @@
             </div>
         </div>
         <div class="tabs">
-            <div class="tab active">All</div>
-            <div class="tab">Unread</div>
-            <div class="tab">Favorites</div>
-            <div class="tab">Groups</div>
+                <div class="tab active">All</div>
+                <div class="tab" >Unread</div>
+                <div class="tab">Favorites</div>
+                <div class="tab">Groups</div>
         </div>
         <div id="UserContacts" class="chat-list">
             @foreach (var contact in contacts)
             {
                @if(contact.Messages.Any()){
-                <a class="chat-item text-decoration-none text-black" role="button" asp-action="Index" asp-controller="Home" asp-route-ActiveContactId="@contact.ConnectionId">
+                <a class="chat-item text-decoration-none text-black w-100" role="button" asp-action="Index" asp-controller="Home" asp-route-ActiveContactId="@contact.ConnectionId">
                     <div class="avatar">
                         <img src="/Assests/Images/@contact.ProfilePicture" class="avatar" alt="Alternate Text" />
                     </div>
-                    <div class="chat-content">
+                    <div class="chat-content w-75">
                         <div class="chat-name">@contact.DisplayName</div>
                             @{
                                 var message = @contact.Messages.OrderByDescending(m => m.DateSent).First();
                                 if(message.AttachmentType == "text")
                                 {
-                                    <div id="lastMessage_@contact.ConnectionId" class="chat-message text-black-50">
+                                    <div id="lastMessage_@contact.ConnectionId" class="chat-message text-black-50 w-75" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                         @message.Text
                                     </div>
                                 }else
@@ -81,93 +107,113 @@
             <button id="videoCallButton" class="ms-auto"><i class="fa-solid fa-video"></i></button>
             </div>
         </header>
+            <div id="chat-messages" class="message-area chat-messages ">
+                    @foreach (var message in Model)
+                    {
+                        @if (message.AttachmentType == "Audios")
+                        {
+                            <div class="@((message.SenderId == Guid.Parse(User.Id.ToString())) ? "sender audio-wrapper ms-auto" : "audio-wrapper receiver")">
+                                <audio class="audio-player" controls src="@message.AttachmentUrl"></audio>
+                            </div>
+                        }
+                        else if (message.AttachmentType == "Photos")
+                        {
+                        <div class="@((message.SenderId == Guid.Parse(User.Id.ToString())) ? "message sent ms-auto" : "message receiver")">
+                                <img src="@message.AttachmentUrl" alt="Photo" class="photo" width="150" height="150" />
+                                <p>@message.Text</p>
+                            </div>
+                        }
+                        else if (message.AttachmentType == "PDFs")
+                        {
 
-        <div id="chat-messages" class="message-area chat-messages">
-                @foreach (var message in Model)
-                {
-                    @if (message.AttachmentType == "Audios")
-                    {
-                        <div class="@((message.SenderId == Guid.Parse(User.Id.ToString())) ? "sender audio-wrapper ms-auto" : "audio-wrapper receiver")">
-                            <audio class="audio-player" controls src="@message.AttachmentUrl"></audio>
-                        </div>
-                    }
-                    else if (message.AttachmentType == "Photos")
-                    {
-                        <div class="@((message.SenderId == Guid.Parse(User.Id.ToString())) ? "sent ms-auto w-25" : "receiver")">
-                            <img src="@message.AttachmentUrl" alt="Photo" class="photo" width="150" height="150" />
-                        </div>
-                    }
-                    else if (message.AttachmentType == "PDFs")
-                    {
-
-                        <div class="@((message.SenderId == Guid.Parse(User.Id.ToString())) ? "sent ms-auto pdf-message" : "receiver pdf-message")">
-                            <div class="pdf-info">
-                                <div class="w-100">
-                                    <embed src="@message.AttachmentUrl#page=1" type="application/pdf" class="pdf-preview" />
+                            <div class="@((message.SenderId == Guid.Parse(User.Id.ToString())) ? "sent ms-auto pdf-message" : "receiver pdf-message")">
+                                <div class="pdf-info">
+                                    <div class="w-100">
+                                        <embed src="@message.AttachmentUrl#page=1" type="application/pdf" class="pdf-preview" />
+                                    </div>
+                                    <div class="pdf-details d-inline">
+                                        <p class="pdf-filename">@message.AttachmentUrl.Split("PDFs/")[1]</p>
+                                        <p class="pdf-filesize">500 KB</p>
+                                    </div>
                                 </div>
-                                <div class="pdf-details d-inline">
-                                    <p class="pdf-filename">@message.AttachmentUrl.Split("PDFs/")[1]</p>
-                                    <p class="pdf-filesize">500 KB</p>
+                                <div class="pdf-actions">
+                                    <a href="@message.AttachmentUrl" class="btn btn-outline-secondary" target="_blank"><i class="fa-solid fa-eye"></i></a>
+                                    <a href="@message.AttachmentUrl" class="btn btn-outline-secondary" download><i class="fa-solid fa-download"></i></a>
                                 </div>
                             </div>
-                            <div class="pdf-actions">
-                                <a href="@message.AttachmentUrl" class="btn btn-outline-secondary" target="_blank"><i class="fa-solid fa-eye"></i></a>
-                                <a href="@message.AttachmentUrl" class="btn btn-outline-secondary" download><i class="fa-solid fa-download"></i></a>
+                        }
+                        else if (message.AttachmentType == "Videos")
+                        {
+                        <div class="@((message.SenderId == Guid.Parse(User.Id.ToString())) ? "message sent ms-auto text-end" : "message receiver")">
+                                <video width="300" height="300" controls src="@message.AttachmentUrl" class="video-player"></video>
+                            <p>@message.Text</p>
+
                             </div>
-                        </div>
+                        }
+                        else if (message.AttachmentType == "text")
+                        {
+                            <div class="@((message.SenderId == Guid.Parse(User.Id.ToString())) ? "sent message" : "received message")">@message.Text</div>
+                        }
                     }
-                    else if (message.AttachmentType == "Videos")
-                    {
-                        <div class="@((message.SenderId == Guid.Parse(User.Id.ToString())) ? "sent ms-auto w-50 text-end" : "receiver")">
-                            <video width="300" height="300" controls src="@message.AttachmentUrl" class="video-player"></video>
-                        </div>
-                    }
-                    else if (message.AttachmentType == "text")
-                    {
-                        <div class="@((message.SenderId == Guid.Parse(User.Id.ToString())) ? "sent message" : "received message")">@message.Text</div>
-                    }
-                }
-            <div id="NewMessages"></div>
-        </div>
+                <div id="NewMessages"></div>
+            </div>
+            <div id="camera-handle">
+
+            <div id="photoPreviewContainer" class="d-none w-100 text-center">
+                    <img id="photoPreview" alt="Captured Photo" class="photo-preview m-auto" />
+                    <div id="cancelPhoto"><i class="fa-solid fa-xmark"></i></div>
+            </div>
+            <div id="videoPreviewContainer" class="d-none w-100 text-center">
+                <video id="capturedVideo" class="captured-preview" controls></video>
+                <div id="cancelVideo"><i class="fa-solid fa-xmark"></i></div>
+            </div>
 
 
-        <div id="photoPreviewContainer" class="d-none w-100 text-center">
-                <img id="photoPreview" alt="Captured Photo" class="photo-preview m-auto" />
-        </div>
-        <div id="videoPreviewContainer" class="d-none w-100 text-center">
-            <video id="capturedVideo" class="captured-preview" controls></video>
+            <div id="cameraModal" class="camera-modal d-none">
+                <video id="cameraPreview" autoplay class="camera-preview"></video>
+                <div class="d-flex">
+                    <button class="btn" id="takePhoto"><i class="fa-solid fa-camera"></i></button>
+                    <button class="btn" id="closeCamera"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            </div>
+
+            <div id="videoModal" class="camera-modal d-none">
+                <video id="videoPreview" autoplay class="camera-preview" controls></video>
+                <div class="d-flex">
+                    <button class="btn btn-light" id="startRecordingVideoButton"><i class="fa-solid fa-play"></i></button>
+                    <button class="btn btn-light" id="stopRecordingVideoButton"><i class="fa-solid fa-square"></i></button>
+                    <button class="btn btn-danger" id="closeVideo"><i class="fa-solid fa-xmark"></i></button>
+
+                </div>
+            </div>
+            <input type="file" id="attachmentInput" accept="image/*,video/*,audio/*,.pdf" style="display: none;">
         </div>
 
         <footer class="chat-footer input-area">
             <input type="text" id="messageInp" placeholder="Type a message" />
             <button id="startRecording"><i class="fa-solid fa-microphone"></i></button>
             <button id="stopRecording" class="d-none"><i class="fa-solid fa-stop"></i></button>
+            <div class="recording-container d-none px-2" id="AudioRecording">
+                <div id="timer">0:00</div>
+                <div class="waveform">
+                    <div class="wave"></div>
+                    <div class="wave"></div>
+                    <div class="wave"></div>
+                    <div class="wave"></div>
+                    <div class="wave"></div>
+                    <div class="wave"></div>
+                    <div class="wave"></div>
+                </div>
+                <div class="recording-dot"></div>
+            </div>
 
             <audio id="audioPlayback" controls class="d-none"></audio>
             <button id="delete" class="d-none"><i class="fa-solid fa-trash"></i></button>
             <button id="send-btn">Send</button>
+
             <button id="capturePhoto"><i class="fa-solid fa-camera"></i></button>
-
-            <div id="cameraModal" class="camera-modal d-none">
-                <video id="cameraPreview" autoplay class="camera-preview"></video>
-                <div class="d-flex">
-                    <button id="takePhoto"><i class="fa-solid fa-camera"></i></button>
-                    <button id="closeCamera"><i class="fa-solid fa-xmark"></i></button>
-                </div>
-            </div>
-
             <button id="captureVideo"><i class="fa-solid fa-video"></i></button>
 
-            <div id="videoModal" class="camera-modal d-none">
-                <video id="videoPreview" autoplay class="camera-preview"></video>
-                <div class="d-flex">
-                    <button id="startRecordingVideoButton"><i class="fa-solid fa-play"></i></button>
-                    <button id="stopRecordingVideoButton"><i class="fa-solid fa-square"></i></button>
-                    <button id="closeVideo"><i class="fa-solid fa-xmark"></i></button>
-
-                </div>
-            </div>
-            <input type="file" id="attachmentInput" accept="image/*,video/*,audio/*,.pdf" style="display: none;">
             <button id="attachButton"><i class="fa-solid fa-paperclip"></i></button>
 
         </footer>

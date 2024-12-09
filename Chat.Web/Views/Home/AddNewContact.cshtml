@@ -2,28 +2,30 @@
 @{
     ViewData["Title"] = "SignUP";
     Layout = "~/Views/Shared/_AuthLayout.cshtml";
+    var message = TempData["Message"] as string;
 }
 
 
-<h1 class="text-center">Register to WhatsApp</h1>
+<h1 class="text-center">AddNewContact</h1>
 
 <form asp-Action="AddnewContact" class="row g-3 my-4">
     <div class="col-md-6">
         <div class="form-data">
             <input asp-for="PhoneNumber" type="text" class="form-control" placeholder="Phone Number" />
+            <p class="bg-danger">@message</p>
             <span asp-validation-for="PhoneNumber"></span>
         </div>
     </div>
     <div class="col-12">
-        <button type="submit" class="btn w-100 main-btn">Register</button>
+        <button type="submit" class="btn w-100 main-btn">Add</button>
     </div>
 </form>
 
 <footer>
     <p class="text-center small">
-        Already a member?
-        <a asp-action="LogIn" asp-controller="Auth" class="link-secondary text-decoration-none" role="button">
-            LogIn
+        Back To Your Chats ?
+        <a asp-action="Index" asp-controller="Home" class="link-secondary text-decoration-none" role="button">
+            Back
             <i class="fa-solid fa-angle-right"></i>
         </a>
     </p>

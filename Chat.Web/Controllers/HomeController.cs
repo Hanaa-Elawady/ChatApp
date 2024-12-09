@@ -4,6 +4,7 @@ using Chat.Web.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace Chat.Web.Controllers
 {
@@ -51,11 +52,23 @@ namespace Chat.Web.Controllers
         {
             if (ModelState.IsValid)
             {
+
                 var userId = User?.FindFirstValue(ClaimTypes.NameIdentifier);
-                var result =await _connectionService.AddNewContact(input.PhoneNumber,userId);
-                if(result == true)
+                var result = await _connectionService.AddNewContact(input.PhoneNumber, userId);
+                if (result == "done")
                 {
-                    return RedirectToAction("Index");
+                    var ConnectionId = _connectionService.getAllContacts(userId).Result.FirstOrDefault()?.ConnectionId;
+                    return RedirectToAction("index", new { ActiveContactId = result.ToString() });
+                }
+                else if(result == "No User Found")
+                {
+                    TempData["Message"] = "This User is not Found";
+                    return View(input);
+                }
+                else
+                {
+                    return RedirectToAction("index", new { ActiveContactId = result.ToString() });
+
                 }
             }
             return View(input);

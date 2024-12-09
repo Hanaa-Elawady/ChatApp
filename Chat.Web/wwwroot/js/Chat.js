@@ -26,15 +26,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const capturedVideo = document.getElementById("capturedVideo");
     const attachButton = document.getElementById("attachButton");
     const attachmentInput = document.getElementById("attachmentInput");
-
+    const AudioRecording = document.getElementById("AudioRecording");
+    const timerElement = document.getElementById("timer");
+    const waves = document.querySelectorAll(".wave");
+    const cancelPhoto = document.getElementById("cancelPhoto");
+    const cancelVideo = document.getElementById("cancelVideo");
+    let seconds = 0;
     // Variables
     let audioBlob, mediaRecorder, audioChunks = [], isRecording = false, videoChunks = [];
     var messageType = "text";
     const reader = new FileReader();
     const connection = Window.ActiveContact;
     const userId = Window.userId;
-    const constraints = { video: true };
+    const videoConstraints = { video: true, audio: true };
+    const PhotoConstraints = { video: true };
     let stream;
+    var timeInterval;
+    var wavesInterval;
     chatMessages.scrollTop = chatMessages.scrollHeight;
 
 
@@ -55,8 +63,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Event Handlers
-
     //record 
     const handleRecordingStart = async () => {
         try {
@@ -67,9 +73,12 @@ document.addEventListener('DOMContentLoaded', () => {
             mediaRecorder = new MediaRecorder(stream);
             mediaRecorder.ondataavailable = (event) => audioChunks.push(event.data);
             mediaRecorder.start();
-
+            timeInterval =setInterval(updateTimer, 1000);
+            wavesInterval = setInterval(updateWaves, 150);
             toggleRecordingUI(true);
-            messageInput.classList.add("d-none");
+
+            audioPlayback.classList.add("d-none");
+
         } catch (error) {
             console.error("Error starting recording", error);
         }
@@ -81,18 +90,49 @@ document.addEventListener('DOMContentLoaded', () => {
             audioBlob = new Blob(audioChunks, { type: "audio/webm" });
             audioPlayback.src = URL.createObjectURL(audioBlob);
         };
+        clearInterval(timeInterval);
+        clearInterval(wavesInterval);
+        seconds = 0;
+        AudioRecording.classList.add("d-none");
 
-        toggleRecordingUI(false);
         audioPlayback.classList.remove("d-none");
+        stopRecordingButton.classList.add("d-none");
+
     };
 
     const handleRecordingDelete = () => {
         audioChunks = [];
         isRecording = false;
         messageType = 'text';
-        audioPlayback.classList.add("d-none");
-        messageInput.classList.remove("d-none");
         toggleRecordingUI(false);
+        clearInterval(timeInterval);
+        clearInterval(wavesInterval);
+        seconds = 0;
+    };
+
+    const updateTimer = () => {
+        seconds++;
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        timerElement.textContent = `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    }
+
+    const updateWaves = () => {
+        waves.forEach(wave => {
+            const randomHeight = Math.random() * 15 + 5;
+            wave.style.height = `${randomHeight}px`;
+        });
+    }
+    const toggleRecordingUI = (isRecording) => {
+        startRecordingButton.classList.toggle("d-none", isRecording);
+        AudioRecording.classList.toggle("d-none", !isRecording);
+        audioPlayback.classList.toggle("d-none", !isRecording)
+        stopRecordingButton.classList.toggle("d-none", !isRecording);
+        deleteRecordButton.classList.toggle("d-none", !isRecording);
+        messageInput.classList.toggle("d-none", isRecording);
+        attachButton.classList.toggle("d-none", isRecording);
+        captureVideoButton.classList.toggle("d-none", isRecording);
+        capturePhotoButton.classList.toggle("d-none", isRecording);
     };
 
     //handle Attachment 
@@ -121,10 +161,11 @@ document.addEventListener('DOMContentLoaded', () => {
         } 
         return "Other"; // Default for unsupported file types
     };
+
     // Photo capture
     const startPhotoCapture = async () => {
         try {
-            stream = await navigator.mediaDevices.getUserMedia(constraints);
+            stream = await navigator.mediaDevices.getUserMedia(PhotoConstraints);
             cameraPreview.srcObject = stream;
             cameraModal.classList.remove("d-none");
         } catch (error) {
@@ -151,11 +192,17 @@ document.addEventListener('DOMContentLoaded', () => {
         closeCamera();
     };
 
+    const deletePhoto = () => {
+        messageType = "text";
+        photoPreview.src = '';
+        photoPreviewContainer.classList.add("d-none");
+    }
 
     // Video capture
     const startVideoCapture = async () => {
         try {
-            stream = await navigator.mediaDevices.getUserMedia(constraints);
+            stream = await navigator.mediaDevices.getUserMedia(videoConstraints);
+            videoPreview.muted = true;
             videoPreview.srcObject = stream;
             videoModal.classList.remove("d-none");
         } catch (error) {
@@ -176,7 +223,6 @@ document.addEventListener('DOMContentLoaded', () => {
         videoChunks = [];
         mediaRecorder = new MediaRecorder(stream);
         mediaRecorder.ondataavailable = (event) => videoChunks.push(event.data);
-
         mediaRecorder.start();
         startRecordingVideoButton.disabled = true;
         stopRecordingVideoButton.disabled = false;
@@ -201,10 +247,15 @@ document.addEventListener('DOMContentLoaded', () => {
         stopRecordingVideoButton.disabled = true;
     };
 
+    const deleteVideo =() => {
+        messageType = "text";
+        capturedVideo.src = '';
+        videoPreviewContainer.classList.add("d-none");
+    }
 
     //sending
     const sendMessage = async () => {
-        if (messageType == 'text') {
+        if (messageType == 'text' && messageInput.value) {
             const textMessage = messageInput.value.trim();
             invokeSendFunction(textMessage, null, messageType);
         }
@@ -304,6 +355,9 @@ document.addEventListener('DOMContentLoaded', () => {
         closeVideoButton.addEventListener("click", closeVideo);
         startRecordingVideoButton.addEventListener("click", startVideoRecording);
         stopRecordingVideoButton.addEventListener("click", stopVideoRecording);
+        cancelPhoto.addEventListener("click", deletePhoto);
+        cancelVideo.addEventListener("click", deleteVideo);
+
         attachButton.addEventListener('click', () => {
             attachmentInput.click();
         });
@@ -314,13 +368,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 handleAttachment(file);
             }
         });
-    };
-
-    // Toggle UI elements during recording
-    const toggleRecordingUI = (isRecording) => {
-        startRecordingButton.classList.toggle("d-none", isRecording);
-        stopRecordingButton.classList.toggle("d-none", !isRecording);
-        deleteRecordButton.classList.toggle("d-none", !isRecording);
     };
 
     const updateChatMessages = (msg) => {
@@ -350,8 +397,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                             <audio class="audio-player" controls src="${msg.attachmentUrl}"></audio>
                                          </div>`;
         } else if (msg.attachmentType === "Photos") {
-            messageElement.innerHTML = `<div class="${msg.senderId === userId ? 'sent ms-auto w-25' : 'receiver'}">
+            messageElement.innerHTML = `<div class="${msg.senderId === userId ? 'message sent ms-auto w-25' : 'message receiver'}">
                                             <img src="${msg.attachmentUrl}" alt="Photo" class="photo ms-auto" width="150" height="150"/>
+                                            <p>${msg.text}</p>
+
                                          </div>`;
         } else if (msg.attachmentType === "PDFs") {
             var attachmentName = msg.attachmentUrl.split("PDFs/")[1].split(".pdf")[0];
@@ -372,8 +421,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     </div>`;
         } else if (msg.attachmentType === "Videos") {
-            messageElement.innerHTML = `<div class="${msg.senderId === userId ? "sent ms-auto w-50" : "receiver"}">
+            messageElement.innerHTML = `<div class="${msg.senderId === userId ? "message sent ms-auto w-50" : "message receiver"}">
                                             <video width="300" height="300" controls src="${msg.attachmentUrl}" class="video-player"></video>
+                                            <p>${msg.text}</p>
                                          </div>`;
         } else {
             messageElement.innerHTML = `<div class="${msg.senderId === userId ? 'message sent' : 'message received'} message">${msg.text}</div>`;
@@ -383,7 +433,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     proxyConnection.on("ReceiveMessage", updateChatMessages);
-
+    //=========================================================================================================================start voice and videocalls
     let localStream;
     let peerConnection;
     const callButton = document.getElementById("callButton");
