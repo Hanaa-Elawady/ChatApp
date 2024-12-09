@@ -9,7 +9,7 @@ This project is a real-time chat application built using .NET Core and SignalR, 
 - **Code-First approach for database handling**  
 - **Media Sharing: Enable sending audios, images, videos, PDFs**
 
-> **Note:** Currently, the project handles only chats and messages, with plans for future updates.
+> **Note:** Currently, the project handles only chats , messages and Media sharing, with plans for future updates.
 
 ---
 
@@ -23,7 +23,7 @@ This project is a real-time chat application built using .NET Core and SignalR, 
 ---
 
 ## Tech Stack
-- **Backend:** ASP.NET Core 8, SignalR
+- **Backend:** ASP.NET Core , SignalR
 - **Frontend:** Js, Html ,Css
 - **Database:** SQL Server  
 - **Architecture:** N-Tier project with Code-First approach using Entity Framework
