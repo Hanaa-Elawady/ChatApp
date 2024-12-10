@@ -27,6 +27,7 @@
 
   <ItemGroup>
     <Folder Include="wwwroot\Assests\Audios\" />
+    <Folder Include="wwwroot\Assests\PDFs\" />
     <Folder Include="wwwroot\Assests\Videos\" />
     <Folder Include="wwwroot\Assests\Photos\" />
   </ItemGroup>

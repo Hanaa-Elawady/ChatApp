@@ -101,6 +101,10 @@ namespace Chat.Web.Hubs
         {
             await Clients.User(connection.PersonId.ToString()).SendAsync("CallDeclinedNotification");
         }
+        public async Task SendNoRespond(ConnectionDto connection)
+        {
+            await Clients.User(connection.PersonId.ToString()).SendAsync("NoResponse");
+        }
         #endregion
     }
 }
