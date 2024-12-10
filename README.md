@@ -9,7 +9,7 @@ This project is a real-time chat application built using .NET Core and SignalR, 
 - **Code-First approach for database handling**  
 - **Media Sharing: Enable sending audios, images, videos, PDFs**
 
-> **Note:** Currently, the project handles only chats , messages and Media sharing, with plans for future updates.
+> **Note:** Currently, the project handles only chats , messages ,Media sharing and voice calls, with plans for future updates.
 
 ---
 
@@ -18,7 +18,8 @@ This project is a real-time chat application built using .NET Core and SignalR, 
 - **Database-First Configuration:** Follows the code-first approach for database design.  
 - **User IDs as GUIDs:** Ensures unique and secure user identification.  
 - **Basic Chat Functionalities:** Add, view, and delete chats and messages.  
-- **Scalable Architecture:** Built with the flexibility to add new features in later stages.  
+- **Scalable Architecture:** Built with the flexibility to add new features in later stages.
+- **Streaming:** Voice Calls option using RTC and signalR.
 
 ---
 
@@ -35,4 +36,5 @@ This project is a real-time chat application built using .NET Core and SignalR, 
 - **Group Chats:** Support for creating and managing group conversations.
 - **User Status Updates:** Add features to set and view user statuses.
 - **Push Notifications:** Notify users of incoming messages in real time.
-- **Add Seen feature:** Indecation for the users weather the messages seen or not. 
+- **Add Seen feature:** Indecation for the users weather the messages seen or not.
+- **Video Calls:** Adding Video Calls options. 
