@@ -1,5 +1,4 @@
 ﻿using Chat.Data.Entities;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace Chat.Repository.Specifications.ConnectionSepecifications
 {
@@ -14,9 +13,8 @@ namespace Chat.Repository.Specifications.ConnectionSepecifications
             AddInclude(x => x.User2);
             AddInclude(x =>x.Messages);
 
-            //reorganize
         }
-        public UserConnectionsWithSpecifications(Guid? id) : base(connection => connection.Id == id)
+        public UserConnectionsWithSpecifications(Guid? id) : base(connection => connection.User1Id == id || connection.User2Id == id)
 
         {
             AddInclude(x => x.User1);

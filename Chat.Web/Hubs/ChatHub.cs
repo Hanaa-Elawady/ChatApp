@@ -1,5 +1,7 @@
-﻿using Chat.Services.Interfaces;
+﻿using Chat.Data.Entities;
+using Chat.Services.Interfaces;
 using Chat.Services.Mapping.DTO_s;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Chat.Web.Hubs
@@ -9,12 +11,14 @@ namespace Chat.Web.Hubs
         private readonly ILogger<ChatHub> _logger;
         private readonly IMessagesService _messagesService;
         private readonly IConnectionService _connectionService;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public ChatHub(ILogger<ChatHub> logger, IMessagesService messagesService, IConnectionService connectionService)
+        public ChatHub(ILogger<ChatHub> logger, IMessagesService messagesService, IConnectionService connectionService , UserManager<ApplicationUser> userManager)
         {
             _logger = logger;
             _messagesService = messagesService;
             _connectionService = connectionService;
+            _userManager = userManager;
         }
 
         private async Task<string> SaveFileAsync(string base64Data, string folder, string fileExtension)
@@ -83,27 +87,29 @@ namespace Chat.Web.Hubs
 
 
         #region voice call
-        public async Task SendOffer(ConnectionDto connection, string offer)
+        public async Task SendOffer(Guid connection, Guid userId,string offer)
         {
-            await Clients.User(connection.PersonId.ToString()).SendAsync("ReceiveOffer", offer);
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            
+            await Clients.User(connection.ToString()).SendAsync("ReceiveOffer", offer , user);
         }
 
-        public async Task SendAnswer(ConnectionDto connection , string answer)
+        public async Task SendAnswer(Guid connection, string answer)
         {
-            await Clients.User(connection.PersonId.ToString()).SendAsync("ReceiveAnswer", answer);
+            await Clients.User(connection.ToString()).SendAsync("ReceiveAnswer", answer);
         }
 
-        public async Task SendIceCandidate( ConnectionDto connection, string candidate)
+        public async Task SendIceCandidate( Guid connection, string candidate)
         {
-            await Clients.User(connection.PersonId.ToString()).SendAsync("ReceiveIceCandidate", candidate);
+            await Clients.User(connection.ToString()).SendAsync("ReceiveIceCandidate", candidate);
         }
-        public async Task SendDecline(ConnectionDto connection)
+        public async Task SendDecline(Guid connection)
         {
-            await Clients.User(connection.PersonId.ToString()).SendAsync("CallDeclinedNotification");
+            await Clients.User(connection.ToString()).SendAsync("CallDeclinedNotification");
         }
-        public async Task SendNoRespond(ConnectionDto connection)
+        public async Task SendNoRespond(Guid connection)
         {
-            await Clients.User(connection.PersonId.ToString()).SendAsync("NoResponse");
+            await Clients.User(connection.ToString()).SendAsync("NoResponse");
         }
         #endregion
     }

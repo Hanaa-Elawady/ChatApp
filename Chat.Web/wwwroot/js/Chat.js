@@ -31,27 +31,47 @@ document.addEventListener('DOMContentLoaded', () => {
     const waves = document.querySelectorAll(".wave");
     const cancelPhoto = document.getElementById("cancelPhoto");
     const cancelVideo = document.getElementById("cancelVideo");
+    const callButton = document.getElementById("callButton");
+    const audioElement = document.getElementById("audio");
+    const callElement = document.getElementById("receiveCall");
+    const callingElement = document.getElementById("calling");
+    const answerButton = document.getElementById("answerButton");
+    const declineButton = document.getElementById("declineButton");
+    const callerDeclineButton = document.getElementById("callerDeclineButton");
+    const callingName = document.getElementById("callingName");
+    const callerName = document.getElementById("callerName");
+    const callerPhone = document.getElementById("callerPhone");
+    const callTimers = document.querySelectorAll(".callTime"); 
+
     let seconds = 0;
     // Variables
     let audioBlob, mediaRecorder, audioChunks = [], isRecording = false, videoChunks = [];
-    var messageType = "text";
+    let messageType = "text";
     const reader = new FileReader();
     const connection = Window.ActiveContact;
     const userId = Window.userId;
     const videoConstraints = { video: true, audio: true };
     const PhotoConstraints = { video: true };
     let stream;
-    var timeInterval;
-    var wavesInterval;
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+    let timeInterval;
+    let wavesInterval;
+    let localStream;
+    let peerConnection;
+    let commingOffer;
+    let timerId;
+    let callingPersonId;
+    let callerTimer;
+    let callTimerInterval;
 
+    if (connection) {
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
 
     // SignalR connection
     const proxyConnection = new signalR.HubConnectionBuilder()
         .withUrl("/chathub")
         .withAutomaticReconnect()
         .build();
-
 
     const initializeConnection = async () => {
         try {
@@ -73,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
             mediaRecorder = new MediaRecorder(stream);
             mediaRecorder.ondataavailable = (event) => audioChunks.push(event.data);
             mediaRecorder.start();
-            timeInterval =setInterval(updateTimer, 1000);
+            timeInterval = setInterval(updateTimer, 1000);
             wavesInterval = setInterval(updateWaves, 150);
             toggleRecordingUI(true);
 
@@ -252,7 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
         capturedVideo.src = '';
         videoPreviewContainer.classList.add("d-none");
     }
-
+    
     //sending
     const sendMessage = async () => {
         if (messageType == 'text' && messageInput.value) {
@@ -339,37 +359,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    const setupEventListeners = () => {
-        sendButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            sendMessage();
-        });
-
-        startRecordingButton.addEventListener('click', handleRecordingStart);
-        stopRecordingButton.addEventListener('click', handleRecordingStop);
-        deleteRecordButton.addEventListener('click', handleRecordingDelete);
-        capturePhotoButton.addEventListener("click", startPhotoCapture);
-        closeCameraButton.addEventListener("click", closeCamera);
-        takePhotoButton.addEventListener("click", capturePhoto);
-        captureVideoButton.addEventListener("click", startVideoCapture);
-        closeVideoButton.addEventListener("click", closeVideo);
-        startRecordingVideoButton.addEventListener("click", startVideoRecording);
-        stopRecordingVideoButton.addEventListener("click", stopVideoRecording);
-        cancelPhoto.addEventListener("click", deletePhoto);
-        cancelVideo.addEventListener("click", deleteVideo);
-
-        attachButton.addEventListener('click', () => {
-            attachmentInput.click();
-        });
-
-        attachmentInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                handleAttachment(file);
-            }
-        });
-    };
-
     const updateChatMessages = (msg) => {
         const isCurrentConnection = document.getElementById("chatName").getAttribute('contact-Id') === msg.connectionId;
 
@@ -404,7 +393,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (msg.attachmentType === "PDFs") {
             var attachmentName = msg.attachmentUrl.split("PDFs/")[1].split(".pdf")[0];
             messageElement.innerHTML = `
-                    <div class="${msg.senderId === userId  ? 'sent ms-auto pdf-message' : 'receiver pdf-message'}">
+                    <div class="${msg.senderId === userId ? 'sent ms-auto pdf-message' : 'receiver pdf-message'}">
                         <div class="pdf-info">
                             <div class="w-100">
                                 <embed src="${msg.attachmentUrl}#page=1" type="application/pdf" class="pdf-preview" />
@@ -431,23 +420,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return messageElement;
     };
 
-    proxyConnection.on("ReceiveMessage", updateChatMessages);
-    //=========================================================================================================================start voice and videocalls
-
-    const callButton = document.getElementById("callButton");
-    const audioElement = document.getElementById("audio");
-    const callElement = document.getElementById("receiveCall");
-    const callingElement = document.getElementById("calling");
-    const answerButton = document.getElementById("answerButton");
-    const declineButton = document.getElementById("declineButton");
-    const callerDeclineButton = document.getElementById("callerDeclineButton");
-    let localStream;
-    let peerConnection;
-    let commingOffer;
-    let timerId;
-    let callConnection
-
-    callButton.addEventListener("click", async () => {
+    //voice call functions 
+    const startCall = async () => {
+        callingPersonId = connection.personId;
+        callingName.innerHTML = `you calling ${connection.displayName}`;
         callingElement.classList.remove("d-none");
         try {
             peerConnection = new RTCPeerConnection();
@@ -459,31 +435,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const offer = await peerConnection.createOffer();
             await peerConnection.setLocalDescription(offer);
-            proxyConnection.invoke("SendOffer", connection, JSON.stringify(offer));
+            proxyConnection.invoke("SendOffer", callingPersonId, userId, JSON.stringify(offer));
         } catch (error) {
             console.error("Error during call setup:", error);
         }
-    });
-
-    proxyConnection.on("ReceiveOffer", async (offer) => {
+    }
+    const handleReceivedOffer = async (offer, userData) => {
+        callingPersonId = userData.id;
+        callerName.innerHTML = userData.displayName;
+        callerPhone.innerHTML = `call from ${userData.phoneNumber}`;
         commingOffer = offer;
         callElement.classList.remove("d-none")
         peerConnection = new RTCPeerConnection();
         timerId = setTimeout(notResponding, 5000);
-    });
+    }
 
-    const notResponding = () => {
-        callElement.classList.add("d-none")
-        proxyConnection.invoke("SendNoRespond", connection);
+    const updateCallTimer = () => {
+        callerTimer++;
+        const minutes = Math.floor(callerTimer / 60);
+        const remainingSeconds = callerTimer % 60;
+
+        callTimers.forEach(timer => {
+            timer.textContent = `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+        });
     }
 
     const answerCall = async () => {
+        callerTimer = 0;
+        callTimerInterval = setInterval(updateCallTimer, 1000);
+        answerButton.classList.add('d-none');
         const offer = commingOffer;
         commingOffer = '';
         clearTimeout(timerId);
         peerConnection.onicecandidate = (event) => {
             if (event.candidate) {
-                proxyConnection.invoke("SendIceCandidate", connection, JSON.stringify(event.candidate));
+                proxyConnection.invoke("SendIceCandidate", callingPersonId, JSON.stringify(event.candidate));
             }
         };
 
@@ -508,25 +494,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const answer = await peerConnection.createAnswer();
         await peerConnection.setLocalDescription(answer);
-        proxyConnection.invoke("SendAnswer", connection, JSON.stringify(answer));
+        proxyConnection.invoke("SendAnswer", callingPersonId, JSON.stringify(answer));
     }
 
-    const declineCall = () => {
-        proxyConnection.invoke("SendDecline", connection);
-        closeStream();
-    }
-
-    answerButton.addEventListener('click', answerCall);
-
-    declineButton.addEventListener('click', declineCall);
-
-    callerDeclineButton.addEventListener('click', declineCall)
-
-    proxyConnection.on("ReceiveAnswer", async (answer) => {
+    const handleReceivedAnswer = async (answer) => {
         try {
+            callerTimer = 0;
+            callTimerInterval = setInterval(updateCallTimer, 1000);
+
             peerConnection.onicecandidate = (event) => {
                 if (event.candidate) {
-                    proxyConnection.invoke("SendIceCandidate", connection, JSON.stringify(event.candidate));
+                    proxyConnection.invoke("SendIceCandidate", callingPersonId, JSON.stringify(event.candidate));
                 }
             };
 
@@ -546,9 +524,9 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error("Error setting answer:", error);
         }
-    });
+    }
 
-    proxyConnection.on("ReceiveIceCandidate", (candidate) => {
+    const handleReceivedIceCandidate = (candidate) => {
         try {
             const parsedCandidate = JSON.parse(candidate);
             peerConnection.addIceCandidate(new RTCIceCandidate(parsedCandidate))
@@ -556,10 +534,22 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error("Error processing ICE candidate:", error);
         }
-    });
+    }
+
+    const notResponding = () => {
+        callElement.classList.add("d-none")
+        proxyConnection.invoke("SendNoRespond", callingPersonId);
+    }
+
+    const declineCall = () => {
+        proxyConnection.invoke("SendDecline", callingPersonId);
+        closeStream();
+    }
 
     const closeStream = () => {
         clearTimeout(timerId);
+        clearTimeout(callTimerInterval);
+        answerButton.classList.remove("d-none");
         callElement.classList.add("d-none");
         callingElement.classList.add("d-none");
 
@@ -573,8 +563,47 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    proxyConnection.on("CallDeclinedNotification",closeStream);
+    const setupEventListeners = () => {
+        sendButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            sendMessage();
+        });
 
+        startRecordingButton.addEventListener('click', handleRecordingStart);
+        stopRecordingButton.addEventListener('click', handleRecordingStop);
+        deleteRecordButton.addEventListener('click', handleRecordingDelete);
+        capturePhotoButton.addEventListener("click", startPhotoCapture);
+        closeCameraButton.addEventListener("click", closeCamera);
+        takePhotoButton.addEventListener("click", capturePhoto);
+        captureVideoButton.addEventListener("click", startVideoCapture);
+        closeVideoButton.addEventListener("click", closeVideo);
+        startRecordingVideoButton.addEventListener("click", startVideoRecording);
+        stopRecordingVideoButton.addEventListener("click", stopVideoRecording);
+        cancelPhoto.addEventListener("click", deletePhoto);
+        cancelVideo.addEventListener("click", deleteVideo);
+        callButton.addEventListener("click", startCall);
+        answerButton.addEventListener('click', answerCall);
+        declineButton.addEventListener('click', declineCall);
+        callerDeclineButton.addEventListener('click', declineCall);
+
+        attachButton.addEventListener('click', () => {
+            attachmentInput.click();
+        });
+
+        attachmentInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleAttachment(file);
+            }
+        });
+    };
+
+
+    proxyConnection.on("ReceiveMessage", updateChatMessages);
+    proxyConnection.on("ReceiveOffer", handleReceivedOffer);
+    proxyConnection.on("ReceiveAnswer", handleReceivedAnswer);
+    proxyConnection.on("ReceiveIceCandidate", handleReceivedIceCandidate);
+    proxyConnection.on("CallDeclinedNotification",closeStream);
     proxyConnection.on("NoResponse",closeStream);
 
     initializeConnection();

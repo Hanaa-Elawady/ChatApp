@@ -10,13 +10,15 @@
     Window.ActiveContact = @Html.Raw(Json.Serialize(activeContact));
     Window.userId = @Html.Raw(Json.Serialize(User.Id));
 </script>
+
 <audio id="audio" autoplay hidden></audio>
 
 <div id="receiveCall" class="fixed-bottom w-25 h-50 ms-auto bg-dark d-flex flex-column text-center justify-content-around d-none">
 
 <div class="text-white">
-   <p>Phone Number </p>
-   <p>Display Name </p>
+   <p id="callerPhone">Phone Number </p>
+   <p id="callerName"></p>
+   <p class="callTime"></p>
 </div>
 
 <div class="actions">
@@ -29,10 +31,13 @@
     </button>
 </div>
 </div>
+
 <div id="calling" class="fixed-bottom w-25 h-50 ms-auto bg-dark d-flex flex-column text-center justify-content-around d-none">
 
 <div class="text-white">
-   <p>you calling Display Name </p>
+   <p id="callingName"></p>
+   <p class="callTime"></p>
+
 </div>
 
 <div class="actions">
