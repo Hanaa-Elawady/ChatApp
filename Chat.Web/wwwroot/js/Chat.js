@@ -440,6 +440,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error("Error during call setup:", error);
         }
     }
+
     const handleReceivedOffer = async (offer, userData) => {
         callingPersonId = userData.id;
         callerName.innerHTML = userData.displayName;
@@ -547,6 +548,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const closeStream = () => {
+        callerTimer =0
         clearTimeout(timerId);
         clearTimeout(callTimerInterval);
         answerButton.classList.remove("d-none");
