@@ -80,10 +80,6 @@ namespace Chat.Web.Hubs
             }
         }
 
-        public async Task CallDeclined(string connectionId)
-        {
-            await Clients.Client(connectionId).SendAsync("CallDeclinedNotification");
-        }
 
 
         #region voice call
@@ -100,6 +96,10 @@ namespace Chat.Web.Hubs
         public async Task SendIceCandidate( ConnectionDto connection, string candidate)
         {
             await Clients.User(connection.PersonId.ToString()).SendAsync("ReceiveIceCandidate", candidate);
+        }
+        public async Task SendDecline(ConnectionDto connection)
+        {
+            await Clients.User(connection.PersonId.ToString()).SendAsync("CallDeclinedNotification");
         }
         #endregion
     }

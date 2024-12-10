@@ -382,7 +382,6 @@ document.addEventListener('DOMContentLoaded', () => {
             contactElement.innerHTML = parseInt(contactElement.innerHTML || "0", 10) + 1;
         }
         var updateLastMessage = document.getElementById(`lastMessage_${msg.connectionId}`)
-        console.log("here");
         if (msg.attachmentType == "text") {
             updateLastMessage.innerHTML = msg.text;
         } else {
@@ -434,37 +433,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     proxyConnection.on("ReceiveMessage", updateChatMessages);
     //=========================================================================================================================start voice and videocalls
+
     let localStream;
     let peerConnection;
     const callButton = document.getElementById("callButton");
     const audioElement = document.getElementById("audio");
 
-    callButton.addEventListener('click', async () => {
+    callButton.addEventListener("click", async () => {
         try {
-            // Get the local audio stream
-            localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            audioElement.srcObject = localStream;
-
-            // Initialize RTCPeerConnection
             peerConnection = new RTCPeerConnection();
 
-            // Add the local audio track to the connection
+            localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
             const audioTrack = localStream.getTracks()[0];
             peerConnection.addTrack(audioTrack, localStream);
 
-            // Handle remote track event
-            peerConnection.ontrack = (event) => {
-                audioElement.srcObject = event.streams[0];
-            };
-
-            // ICE Candidate Handling
-            peerConnection.onicecandidate = (event) => {
-                if (event.candidate) {
-                    proxyConnection.invoke("SendIceCandidate", connection, JSON.stringify(event.candidate));
-                }
-            };
-
-            // Create and send offer
             const offer = await peerConnection.createOffer();
             await peerConnection.setLocalDescription(offer);
             proxyConnection.invoke("SendOffer", connection, JSON.stringify(offer));
@@ -473,69 +456,88 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Receive Offer
     proxyConnection.on("ReceiveOffer", async (offer) => {
-        const answerCall = confirm("You have an incoming call. Do you want to answer?");
+        try {
+            peerConnection = new RTCPeerConnection();
 
-        if (answerCall) {
-            try {
-                localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                audioElement.srcObject = localStream;
-
-                peerConnection = new RTCPeerConnection();
-                peerConnection.addTrack(localStream.getTracks()[0], localStream);
-
-                peerConnection.ontrack = (event) => {
-                    console.log("Remote track received:", event.streams[0]);
-                    audioElement.srcObject = event.streams[0];
-                };
+            const answerCall = confirm("You have an incoming call. Do you want to answer?");
+            if (answerCall) {
 
                 peerConnection.onicecandidate = (event) => {
                     if (event.candidate) {
-                        console.log("Sending ICE candidate:", event.candidate);
                         proxyConnection.invoke("SendIceCandidate", connection, JSON.stringify(event.candidate));
+                    }
+                };
+
+                peerConnection.ontrack = (event) => {
+                    console.log("Track event received on receiver side:", event.streams[0]);
+                    const remoteAudioStream = event.streams[0];
+                    if (remoteAudioStream) {
+                        audioElement.srcObject = remoteAudioStream;
+                        audioElement.play().catch((error) => {
+                            console.error("Error playing remote audio:", error);
+                        });
                     }
                 };
 
                 const parsedOffer = JSON.parse(offer);
                 await peerConnection.setRemoteDescription(new RTCSessionDescription(parsedOffer));
 
+                localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+                const audioTrack = localStream.getTracks()[0];
+                peerConnection.addTrack(audioTrack, localStream);
+
                 const answer = await peerConnection.createAnswer();
                 await peerConnection.setLocalDescription(answer);
-                console.log("Answer created:", answer);
-
                 proxyConnection.invoke("SendAnswer", connection, JSON.stringify(answer));
-            } catch (error) {
-                console.error("Error receiving offer:", error);
+            } else {
+                proxyConnection.invoke("SendDecline", connection);
             }
-        } else {
-            console.log("Call declined.");
-            proxyConnection.invoke("CallDeclined", connection);
+        } catch (error) {
+            console.error("Error receiving offer:", error);
         }
     });
 
-    // Receive Answer
+
     proxyConnection.on("ReceiveAnswer", async (answer) => {
         try {
+            peerConnection.onicecandidate = (event) => {
+                if (event.candidate) {
+                    proxyConnection.invoke("SendIceCandidate", connection, JSON.stringify(event.candidate));
+                }
+            };
+
+            peerConnection.ontrack = (event) => {
+                const remoteAudioStream = event.streams[0];
+                if (remoteAudioStream) {
+                    audioElement.srcObject = remoteAudioStream;
+                    audioElement.play().catch((error) => {
+                        console.error("Error playing remote audio:", error);
+                        alert("User interaction is required to play the audio.");
+                    });
+                }
+            };
+
             const parsedAnswer = JSON.parse(answer);
             await peerConnection.setRemoteDescription(new RTCSessionDescription(parsedAnswer));
-            console.log("Answer received and set:", parsedAnswer);
         } catch (error) {
             console.error("Error setting answer:", error);
         }
     });
 
-    // Receive ICE Candidate
     proxyConnection.on("ReceiveIceCandidate", (candidate) => {
-        console.log("candidate");
         try {
             const parsedCandidate = JSON.parse(candidate);
             peerConnection.addIceCandidate(new RTCIceCandidate(parsedCandidate))
-                .catch(error => console.error("Error adding ICE candidate:", error));
+                .catch((error) => console.error("Error adding ICE candidate:", error));
         } catch (error) {
             console.error("Error processing ICE candidate:", error);
         }
     });
 
+    proxyConnection.on("CallDeclinedNotification", () => {
+        console.log("Call declined.");
+    });
     initializeConnection();
 });
