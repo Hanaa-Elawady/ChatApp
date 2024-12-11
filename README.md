@@ -2,6 +2,9 @@
 
 ## Overview
 This project is a real-time chat application built using .NET Core and SignalR, inspired by WhatsApp. It focuses on seamless communication and efficient chat handling, with the following core features:  
+
+[Watch the demo video](https://drive.google.com/file/d/1JxVUuCgYIpsoxmx4_x6MTgoYVtLSdOmO/view?usp=sharing)
+
 - **Real-time communication**  
 - **User Registeration using Twillo To varify the PhoneNumber**
 - **User authentication using GUID IDs**  
